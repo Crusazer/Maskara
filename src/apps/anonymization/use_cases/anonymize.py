@@ -13,7 +13,8 @@ class AnonymizeUseCaseImpl:
         self.anonymizer = anonymizer
 
     async def __call__(self, data: AnonymizationData) -> AnonymizedData:
-        result = await self.anonymizer.anonymize(data.text, data.labels, data.threshold)
+        exclude = {word.lower() for word in data.exclude_lemmas}
+        result = await self.anonymizer.anonymize(data.text, data.labels, data.threshold, set(exclude))
         return AnonymizedData(
             text=result.text,
             anonymization_map=result.map,

@@ -56,15 +56,13 @@ class GlinerTextChunker:
         return enc["length"][0]
 
     @staticmethod
-    def _split_into_paragraphs(text: str) -> list[tuple[str, int, int]]:
+    def _split_into_paragraphs(text: str, start_offset: int = 0) -> list[tuple[str, int, int]]:
         """Разбивает текст на абзацы с сохранением символьных позиций."""
         paragraphs = []
-        # Паттерн ищет блоки текста, разделенные двумя или более переносами строки.
-        # re.DOTALL позволяет '.' совпадать с '\n'
         for match in re.finditer(r"\S(?:.|\n)*?(?=\n{2,}|$)", text, re.DOTALL):
             paragraph_text = match.group(0).strip()
             if paragraph_text:
-                paragraphs.append((paragraph_text, match.start(), match.end()))
+                paragraphs.append((paragraph_text, start_offset + match.start(), start_offset + match.end()))
         return paragraphs
 
     @staticmethod
@@ -241,33 +239,54 @@ class GlinerTextChunker:
         final_chunks = []
         for text, start, _ in chunks_to_process:
             if self._count_tokens(text) <= self.max_tokens:
+                # Убедимся, что end-позиция верна. start + len(text) - это правильный способ.
                 final_chunks.append((text, start, start + len(text)))
                 continue
 
             # Чанк слишком длинный, разбиваем его дальше
             sub_chunks = split_func(text, start)
 
-            # Жадное объединение полученных под-чанков
+            if not sub_chunks:  # Если сплиттер ничего не вернул
+                if text:
+                    final_chunks.append((text, start, start + len(text)))
+                continue
+
+            # --- НАЧАЛО ИСПРАВЛЕННОЙ ЛОГИКИ ЖАДНОГО ОБЪЕДИНЕНИЯ ---
+
             i = 0
             n = len(sub_chunks)
             while i < n:
-                current_text, current_start, _ = sub_chunks[i]
-                current_end = sub_chunks[i][2]
+                # Начинаем с первого под-чанка в новом объединенном блоке
+                # Его глобальные start и end позиции
+                current_start, current_end = sub_chunks[i][1], sub_chunks[i][2]
+
                 j = i + 1
                 while j < n:
-                    next_text = sub_chunks[j][0]
-                    # Восстанавливаем разделитель из исходного текста для точного подсчета токенов
-                    separator = text[(sub_chunks[j - 1][2] - start) : (sub_chunks[j][1] - start)]
-                    test_text = current_text + separator + next_text
+                    # Потенциальная конечная позиция после слияния со следующим под-чанком
+                    next_end = sub_chunks[j][2]
+
+                    # Получаем тестовый текст НЕ конкатенацией, а СРЕЗОМ из родительского чанка 'text'
+                    # Индексы для среза должны быть относительны 'text', поэтому вычитаем 'start'
+                    span_start_in_parent = current_start - start
+                    span_end_in_parent = next_end - start
+                    test_text = text[span_start_in_parent:span_end_in_parent]
 
                     if self._count_tokens(test_text) <= self.max_tokens:
-                        current_text = test_text
-                        current_end = sub_chunks[j][2]
+                        # Если слияние возможно, мы просто расширяем наш 'end' и двигаемся дальше
+                        current_end = next_end
                         j += 1
                     else:
+                        # Если превысили лимит, прекращаем слияние
                         break
 
-                final_chunks.append((current_text, current_start, current_end))
+                # Создаем финальный чанк для объединенного блока
+                # Снова берем текст как срез из родительского чанка, чтобы гарантировать идентичность
+                final_text_for_chunk = text[current_start - start : current_end - start]
+                final_chunks.append((final_text_for_chunk, current_start, current_end))
+
+                # Переходим к следующему необработанному под-чанку
                 i = j
+
+            # --- КОНЕЦ ИСПРАВЛЕННОЙ ЛОГИКИ ---
 
         return final_chunks

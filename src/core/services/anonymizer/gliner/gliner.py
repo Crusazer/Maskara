@@ -1,4 +1,5 @@
 import asyncio
+import pymorphy3
 from functools import lru_cache
 
 from gliner import GLiNER
@@ -8,6 +9,7 @@ from src.core.services.anonymizer.schemas import AnonymizationResult
 CACHE_DIR = "./models"
 DEFAULT_MODEL = "knowledgator/gliner-pii-large-v1.0"
 SEMAPHORE = asyncio.Semaphore(1)
+_morph = pymorphy3.MorphAnalyzer(lang="ru")
 
 
 @lru_cache
@@ -15,12 +17,29 @@ def get_gliner(model: str = DEFAULT_MODEL) -> "GlinerAnonymizer":
     return GlinerAnonymizer(model)
 
 
+@lru_cache(maxsize=10000)
+def _get_lemma_cached(word: str) -> str:
+    """Кэшированная лемматизация для производительности."""
+    parsed = _morph.parse(word)
+    if parsed:
+        return parsed[0].normal_form.lower()
+    return word.lower()
+
+
 class GlinerAnonymizer:
     def __init__(self, model: str = DEFAULT_MODEL) -> None:
         self.model = GLiNER.from_pretrained(model, cache_dir=CACHE_DIR)
         self.chunker = GlinerTextChunker(self.model.data_processor, max_tokens=768)
 
-    async def anonymize(self, text: str, labels: list[str], threshold: float) -> AnonymizationResult:
+    async def anonymize(
+        self, text: str, labels: list[str], threshold: float, exclude_lemmas: set[str] | None = None
+    ) -> AnonymizationResult:
+        """
+        Анонимизирует текст с возможностью исключения слов по леммам.
+
+        Exclude_lemmas: множество лемм (в нижнем регистре), которые НЕ должны анонимизироваться.
+                               Пример: {"сторона", "договор"}
+        """
         chunks: list[tuple[str, int, int]] = await self.chunker.chunk(text)
 
         all_entities = []
@@ -33,11 +52,24 @@ class GlinerAnonymizer:
             results = await asyncio.gather(*(t[0] for t in tasks))
 
             for entities, (task, global_start) in zip(results, tasks):
+                print(f"{entities}")
                 for ent in entities:
                     ent["start"] += global_start
                     ent["end"] += global_start
                     ent["text"] = text[ent["start"] : ent["end"]]
+                    print(ent["text"])
                 all_entities.extend(entities)
+
+        if exclude_lemmas:
+            filtered_entities = []
+            for ent in all_entities:
+                word = ent["text"]
+                lemma = _get_lemma_cached(word)
+                if lemma not in exclude_lemmas:
+                    filtered_entities.append(ent)
+                else:
+                    print(f'Exclude lemma "{lemma}"')
+            all_entities = filtered_entities
 
         # Умная дедупликация на основе score.
         # Оставляем сущность с наибольшей уверенностью для каждого диапазона (start, end).

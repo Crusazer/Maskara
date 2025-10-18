@@ -7,6 +7,7 @@ class AnonymizationData(InputApiSchema):
     text: str
     labels: list[str]
     threshold: float = Field(..., gt=0, le=1)
+    exclude_lemmas: list[str]
 
 
 class AnonymizedData(OutputApiSchema):
