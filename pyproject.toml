@@ -27,7 +27,7 @@ exclude = [
 extend-select = ["Q"]  # Q = flake8-quotes
 
 [tool.ruff.lint.flake8-quotes]
-inline-quotes = "single"
+inline-quotes = "double"
 
 [tool.ruff.lint.isort]
 order-by-type = true
@@ -38,7 +38,7 @@ known-first-party = ["maskara"]  # ← рекомендуется указать
 
 # === Форматтер (только если используете `ruff format`) ===
 [tool.ruff.format]
-quote-style = "single"
+quote-style = "double"
 indent-style = "space"
 line-ending = "auto"
 # line-width по умолчанию = line-length из [tool.ruff], но можно задать явно:
