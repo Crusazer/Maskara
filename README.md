@@ -172,7 +172,7 @@ SOFTWARE.
 ---
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![Python: 3.12+](https://img.shields.io/badge/Python-3.10%2B-blue)](https://python.org)
+[![Python: 3.12+](https://img.shields.io/badge/Python-3.12%2B-blue)](https://python.org)
 [![Runs on CPU](https://img.shields.io/badge/Device-CPU-orange)](https://your-repo-url)
 
 ---
