@@ -5,14 +5,8 @@ description = "Add your description here"
 requires-python = ">=3.12"
 dependencies = []
 
-[tool.black]
-skip-string-normalization = true
-line-length = 120
-
 [tool.ruff]
 line-length = 120
-lint.extend-select = ["Q"]
-
 src = ["src", "tests"]
 exclude = [
     ".venv",
@@ -24,6 +18,10 @@ exclude = [
     "volumes",
 ]
 
+# Включение правил линтинга
+[tool.ruff.lint]
+extend-select = ["Q"]  # Q = flake8-quotes
+
 [tool.ruff.lint.flake8-quotes]
 inline-quotes = "single"
 
@@ -32,4 +30,12 @@ order-by-type = true
 relative-imports-order = "closest-to-furthest"
 extra-standard-library = ["typing"]
 section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
-known-first-party = []
+known-first-party = ["maskara"]  # ← рекомендуется указать имя проекта
+
+# === Форматтер (только если используете `ruff format`) ===
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+line-ending = "auto"
+# line-width по умолчанию = line-length из [tool.ruff], но можно задать явно:
+# line-width = 120
