@@ -1,0 +1,36 @@
+.git
+__pycache__
+*.pyc
+.venv
+models/
+.env
+
+.idea/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.gitignore
+
+# Docker-специфичные
+.dockerignore
+Dockerfile*
+docker-compose*
+compose*
+
+# Сборочные артефакты (Java/.NET — на всякий случай)
+.classpath
+.project
+.settings/
+.toolstarget
+.vs/
+.vscode/
+*.proj.user
+*.dbmdl
+*.jfm
+bin/
+obj/
+
+# Документация
+README.md
+LICENSE
+CHANGELOG.md
