@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     """
 
     GLINER_MODEL: str = "knowledgator/gliner-pii-large-v1.0"
-    CORS_ORIGIN: list[str]
+    CORS_ORIGINS: list[str]
     API_KEY: str
 
     model_config = SettingsConfigDict(
