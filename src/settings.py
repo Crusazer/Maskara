@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     Настройки проекта.
     """
 
+    GLINER_MODEL: str = "knowledgator/gliner-pii-large-v1.0"
     CORS_ORIGIN: list[str]
     API_KEY: str
 
