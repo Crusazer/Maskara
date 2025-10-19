@@ -12,4 +12,4 @@ class AnonymizationData(InputApiSchema):
 
 class AnonymizedData(OutputApiSchema):
     text: str
-    anonymization_map: dict[str, str]
+    anonymization_map: dict[str, dict[str, str]]

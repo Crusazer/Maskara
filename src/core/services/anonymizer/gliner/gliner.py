@@ -52,12 +52,10 @@ class GlinerAnonymizer:
             results = await asyncio.gather(*(t[0] for t in tasks))
 
             for entities, (task, global_start) in zip(results, tasks):
-                print(f"{entities}")
                 for ent in entities:
                     ent["start"] += global_start
                     ent["end"] += global_start
                     ent["text"] = text[ent["start"] : ent["end"]]
-                    print(ent["text"])
                 all_entities.extend(entities)
 
         if exclude_lemmas:
@@ -67,8 +65,6 @@ class GlinerAnonymizer:
                 lemma = _get_lemma_cached(word)
                 if lemma not in exclude_lemmas:
                     filtered_entities.append(ent)
-                else:
-                    print(f'Exclude lemma "{lemma}"')
             all_entities = filtered_entities
 
         # Умная дедупликация на основе score.
@@ -111,9 +107,15 @@ class GlinerAnonymizer:
             result_chars[ent["start"] : ent["end"]] = list(placeholder)
 
         anonymized_text = "".join(result_chars)
-        flat_anon_map = {v: k[1] for k, v in anon_map.items()}
 
-        return AnonymizationResult(text=anonymized_text, map=flat_anon_map)
+        # Строим nested_map: dict[label, dict[placeholder, original_text]]
+        nested_anon_map: dict[str, dict[str, str]] = {}
+        for (label, original_text), placeholder in anon_map.items():
+            if label not in nested_anon_map:
+                nested_anon_map[label] = {}
+            nested_anon_map[label][original_text] = placeholder
+
+        return AnonymizationResult(text=anonymized_text, map=nested_anon_map)
 
     @staticmethod
     def _resolve_overlapping_entities(entities: list[dict]) -> list[dict]:
