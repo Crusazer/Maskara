@@ -1,0 +1,47 @@
+[project]
+name = "maskara"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.119.0",
+    "gliner>=0.2.22",
+    "pydantic-settings>=2.11.0",
+    "pymorphy3>=2.0.6",
+    "uvicorn>=0.37.0",
+]
+
+[tool.ruff]
+line-length = 120
+src = ["src", "tests"]
+exclude = [
+    ".venv",
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    "venv",
+    "volumes",
+]
+
+# Включение правил линтинга
+[tool.ruff.lint]
+extend-select = ["Q"]  # Q = flake8-quotes
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "double"
+
+[tool.ruff.lint.isort]
+order-by-type = true
+relative-imports-order = "closest-to-furthest"
+extra-standard-library = ["typing"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+known-first-party = ["maskara"]  # ← рекомендуется указать имя проекта
+
+# === Форматтер (только если используете `ruff format`) ===
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+# line-width по умолчанию = line-length из [tool.ruff], но можно задать явно:
+# line-width = 120
