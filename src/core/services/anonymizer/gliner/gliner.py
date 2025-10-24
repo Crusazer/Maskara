@@ -9,6 +9,7 @@ from src.core.services.anonymizer.schemas import AnonymizationResult
 CACHE_DIR = "./models"
 DEFAULT_MODEL = "knowledgator/gliner-pii-large-v1.0"
 SEMAPHORE = asyncio.Semaphore(1)
+CHUNK_SIZE = 740
 _morph = pymorphy3.MorphAnalyzer(lang="ru")
 
 
@@ -29,7 +30,7 @@ def _get_lemma_cached(word: str) -> str:
 class GlinerAnonymizer:
     def __init__(self, model: str = DEFAULT_MODEL) -> None:
         self.model = GLiNER.from_pretrained(model, cache_dir=CACHE_DIR)
-        self.chunker = GlinerTextChunker(self.model.data_processor, max_tokens=768)
+        self.chunker = GlinerTextChunker(self.model.data_processor, max_tokens=CHUNK_SIZE)
 
     async def anonymize(
         self, text: str, labels: list[str], threshold: float, exclude_lemmas: set[str] | None = None
